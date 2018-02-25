@@ -31,7 +31,6 @@ from boa.blockchain.vm.Neo.Transaction import GetUnspentCoins
 from boa.blockchain.vm.Neo.Action import RegisterAction
 from boa.blockchain.vm.Neo.Blockchain import GetHeight
 
-
 # region Variables
 
 # Wallet hash of the owner.
@@ -110,7 +109,7 @@ def Main(operation, args):
         bytearray: The result of the operation.
     """
 
-    print("LootMarkets: Version 1.0: CoZ testnet deployment")
+    print("LootMarkets: Version 1.0: testnet deployment")
 
     trigger = GetTrigger()
 
@@ -140,7 +139,7 @@ def Main(operation, args):
                 Notify(transaction_details)
                 return operation_result
 
-        # Transfer an item from an address to an address on a marketplace.
+        # Transfer an item from an address to another address on a marketplace.
         if operation == "transfer_item":
             if len(args) == 4:
                 marketplace = args[0]
@@ -168,7 +167,7 @@ def Main(operation, args):
         """
         Ommited create item functionality due to not having a strong argument to store details of items on the 
         blockchain. Item details are best stored off chain by the registerer of the marketplace.
-        This code has been left as an example.
+        This code serves as an example.
         
         # Create a new item.
         if operation == "create_item":
@@ -196,21 +195,16 @@ def Main(operation, args):
                 Notify(transaction_details)
                 return True
         """
-        # ======== Marketplace Operations =========
 
-        # Register a new marketplace on the blockchain.
-        if operation == "register_marketplace":
-            if len(args) == 2:
-                marketplace = args[0]
-                address = args[1]
-                return register_marketplace(marketplace, address)
+        # ======== Marketplace Operations =========
+        # For each marketplace operation, Notify the details of the
+        # operation so the API can catch and handle the events.
 
         # Query the owner address of a marketplace.
         if operation == "marketplace_owner":
             if len(args) == 1:
                 marketplace = args[0]
                 owner = marketplace_owner(marketplace)
-                # Notify the API with the address of the marketplace owner.
                 transaction_details = ["marketplace_owner", marketplace, owner]
                 Notify(transaction_details)
                 return True
@@ -222,7 +216,6 @@ def Main(operation, args):
                 address = args[1]
                 item_id = args[2]
                 price = args[3]
-                # Notify the API if the offer was put.
                 operation_result = put_offer(marketplace, address, item_id, price)
                 transaction_details = ["put_offer", marketplace, address, operation_result]
                 Notify(transaction_details)
@@ -234,7 +227,6 @@ def Main(operation, args):
                 marketplace = args[0]
                 address_to = args[1]
                 offer_id = args[2]
-                # Notify the API if the offer was bought.
                 operation_result = buy_offer(marketplace, address_to, offer_id)
                 transaction_details = ["buy_offer", marketplace, address_to, operation_result]
                 Notify(transaction_details)
@@ -246,7 +238,6 @@ def Main(operation, args):
                 marketplace = args[0]
                 address = args[1]
                 offer_id = args[2]
-                # Notify the API if the offer was cancelled.
                 operation_result = cancel_offer(marketplace, address, offer_id)
                 transaction_details = ["cancel_offer", marketplace, address, operation_result]
                 Notify(transaction_details)
@@ -259,7 +250,6 @@ def Main(operation, args):
                 offer_id = args[1]
                 offer_s = get_offer(marketplace, offer_id)
                 offer = deserialize_bytearray(offer_s)
-                # Notify the API with the details of the offer.
                 transaction_details = ["get_offer", marketplace, offer]
                 Notify(transaction_details)
                 return True
@@ -270,15 +260,21 @@ def Main(operation, args):
                 marketplace = args[0]
                 offers_s = get_all_offers(marketplace)
                 offers = deserialize_bytearray(offers_s)
-                # Notify the API with the ids of the offers.
                 transaction_details = ["get_all_offers", marketplace, offers]
                 Notify(transaction_details)
                 return True
 
-        # ========= Crowdsale & NEP-5 Specific Operations ==========
+        # ========= Administration, Crowdsale & NEP-5 Specific Operations ==========
 
         # Commands only the owner can invoke.
         if CheckWitness(contract_owner):
+
+            # Register a new marketplace on the blockchain.
+            if operation == "register_marketplace":
+                if len(args) == 2:
+                    marketplace = args[0]
+                    address = args[1]
+                    return register_marketplace(marketplace, address)
 
             # Register a list of addresses for KYC.
             if operation == "kyc_register":
@@ -349,7 +345,7 @@ def Main(operation, args):
     return False
 
 
-# region Inventory Methods
+# region Inventory operations
 
 def give_items(args):
     """
@@ -569,50 +565,6 @@ def save_inventory(marketplace, address, inventory):
 
 
 # region Market Methods
-
-
-def register_marketplace(marketplace, address):
-    """
-    Register a new marketplace on the blockchain.
-
-    :param marketplace:str The name to register the new marketplace as.
-    :param address:str The address of the owner who will have exclusive permissions for the created marketplace methods.
-    :return:
-        bool: Whether the marketplace was registered.
-    """
-    context = GetContext()
-
-    # Only the owner of the contract can register a new marketplace.
-    if not CheckWitness(contract_owner):
-        print("Operation Forbidden: Only the owner of this contract may invoke the operation - register_marketplace")
-        return False
-
-    # If the marketplace has already been created, return False.
-    if marketplace_owner(marketplace):
-        print("A marketplace with this name already exists!")
-        return False
-
-    # Concatenate the owner key and save the address into storage.
-    owner_key = concat(marketplace_key, marketplace)
-    Put(context, owner_key, address)
-
-    return True
-
-
-def marketplace_owner(marketplace):
-    """
-    Get the address of the owner who has ownership over a specific marketplace.
-
-    :param marketplace:str The name of the marketplace to check the owner.
-    :return:
-        bytearray: The address of the owner who owns the marketplace.
-    """
-    context = GetContext()
-
-    # Concatenate the owner key and return the address from storage.
-    owner_key = concat(marketplace_key, marketplace)
-    owner = Get(context, owner_key)
-    return owner
 
 
 def put_offer(marketplace, address, item_id, price):
@@ -864,7 +816,50 @@ def get_offer(marketplace,offer_id):
 # endregion
 
 
-# region NEP-5 Operations
+# region Administration operations
+
+def register_marketplace(marketplace, address):
+    """
+    Register a new marketplace on the blockchain.
+
+    :param marketplace:str The name to register the new marketplace as.
+    :param address:str The address of the owner who will have exclusive permissions over the created marketplace.
+    :return:
+        bool: Whether the marketplace was registered.
+    """
+    context = GetContext()
+
+    # If the marketplace has already been created, return False.
+    if marketplace_owner(marketplace):
+        print("A marketplace with this name already exists!")
+        return False
+
+    # Concatenate the owner key and save the address into storage.
+    owner_key = concat(marketplace_key, marketplace)
+    Put(context, owner_key, address)
+
+    return True
+
+
+def marketplace_owner(marketplace):
+    """
+    Get the address of the owner who has ownership over a specific marketplace.
+
+    :param marketplace:str The name of the marketplace to check the owner.
+    :return:
+        bytearray: The address of the owner who owns the marketplace.
+    """
+    context = GetContext()
+
+    # Concatenate the owner key and return the address from storage.
+    owner_key = concat(marketplace_key, marketplace)
+    owner = Get(context, owner_key)
+    return owner
+
+# region Administration
+
+
+# region NEP-5 operations
 
 def transfer_token(address_from, address_to, amount):
     """
@@ -1146,6 +1141,7 @@ def add_to_circulation(amount):
     current_supply = Get(context,in_circulation_key)
     current_supply += amount
     Put(context,in_circulation_key,current_supply)
+
 # endregion
 
 
