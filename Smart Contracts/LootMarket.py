@@ -47,7 +47,6 @@ in_circulation_key = b'in_circulation'             # The LOOT in circulation.
 kyc_key = b'kyc_okay'                              # Is an address KYC registered.
 limited_round_key = b'r1'                          # The amount of tokens an address has exchanged in the first round.
 
-
 # ICO variables
 name = "LootToken"                     # The name of the token.
 symbol = "LOOT"                        # The symbol of our token.
@@ -59,7 +58,6 @@ block_sale_start = 371613              # Which block to start the crowd-sale.
 limited_round_end = 1000000            # Which block the limited round ends.
 max_exchange_limited_round = 10000000  # The maximum tokens an address can exchange on the limited round.
 
-
 # Events
 OnTransfer = RegisterAction('transfer', 'from', 'to', 'amount')
 OnRefund = RegisterAction('refund', 'to', 'amount')
@@ -67,7 +65,6 @@ OnInvalidKYCAddress = RegisterAction('invalid_registration','address')
 OnKYCRegister = RegisterAction('kyc_registration','address')
 
 # endregion
-
 
 # region Structs
 
@@ -115,13 +112,14 @@ def Main(operation, args):
 
     if trigger == Application():
 
-        # ========= Item Operations =========
+        # ======== Marketplace Operations =========
+        # For each marketplace operation, Notify the details of the
+        # operation so the API can catch and handle the events.
 
         # Give items to an address on a marketplace.
         if operation == "give_items":
             marketplace = args[0]
             address = args[1]
-            # Notify the API whether the items were given.
             operation_result = give_items(args)
             transaction_details = ["give_items", marketplace, address, operation_result]
             Notify(transaction_details)
@@ -133,7 +131,6 @@ def Main(operation, args):
                 marketplace = args[0]
                 address = args[1]
                 item_id = args[2]
-                # Notify the API whether the item was removed.
                 operation_result = remove_item(marketplace, address, item_id)
                 transaction_details = ["remove_item", marketplace, address, operation_result]
                 Notify(transaction_details)
@@ -146,7 +143,6 @@ def Main(operation, args):
                 address_from = args[1]
                 address_to = args[2]
                 item_id = args[3]
-                # Notify the API with the details of the item transfer.
                 operation_result = transfer_item(marketplace, address_from, address_to, item_id)
                 transaction_details = ["transfer_item", marketplace, address_from, address_to, item_id, operation_result]
                 Notify(transaction_details)
@@ -159,46 +155,9 @@ def Main(operation, args):
                 address = args[1]
                 inventory_s = get_inventory(marketplace, address)
                 inventory = deserialize_bytearray(inventory_s)
-                # Notify the API with the details of the inventory.
                 transaction_details = ["get_inventory", marketplace, address, inventory]
                 Notify(transaction_details)
                 return True
-
-        """
-        Ommited create item functionality due to not having a strong argument to store details of items on the 
-        blockchain. Item details are best stored off chain by the registerer of the marketplace.
-        This code serves as an example.
-        
-        # Create a new item.
-        if operation == "create_item":
-            if len(args) == 5:
-                marketplace = args[0]
-                item_id = args[1]
-                item_type = args[2]
-                item_rarity = args[3]
-                item_damage = args[4]
-                # Notify the API whether the item was created.
-                operation_result = create_item(marketplace, item_id, item_type, item_rarity, item_damage)
-                transaction_details = ["create_item", marketplace, item_id, operation_result]
-                Notify(transaction_details)
-                return operation_result
-                
-        # Query the details of an item.
-        if operation == "get_item":
-            if len(args) == 2:
-                marketplace = args[0]
-                item_id = args[1]
-                # Notify the API the details of the item.
-                item_s = get_item(item_id)
-                item = deserialize_bytearray(item_s)
-                transaction_details = ["get_item", marketplace, item]
-                Notify(transaction_details)
-                return True
-        """
-
-        # ======== Marketplace Operations =========
-        # For each marketplace operation, Notify the details of the
-        # operation so the API can catch and handle the events.
 
         # Query the owner address of a marketplace.
         if operation == "marketplace_owner":
@@ -263,6 +222,38 @@ def Main(operation, args):
                 transaction_details = ["get_all_offers", marketplace, offers]
                 Notify(transaction_details)
                 return True
+
+        """
+        Ommited create item functionality due to not having a strong argument to store details of items on the 
+        blockchain. Item details are best stored off chain by the registerer of the marketplace.
+        This code serves as an example.
+
+        # Create a new item.
+        if operation == "create_item":
+            if len(args) == 5:
+                marketplace = args[0]
+                item_id = args[1]
+                item_type = args[2]
+                item_rarity = args[3]
+                item_damage = args[4]
+                # Notify the API whether the item was created.
+                operation_result = create_item(marketplace, item_id, item_type, item_rarity, item_damage)
+                transaction_details = ["create_item", marketplace, item_id, operation_result]
+                Notify(transaction_details)
+                return operation_result
+
+        # Query the details of an item.
+        if operation == "get_item":
+            if len(args) == 2:
+                marketplace = args[0]
+                item_id = args[1]
+                # Notify the API the details of the item.
+                item_s = get_item(item_id)
+                item = deserialize_bytearray(item_s)
+                transaction_details = ["get_item", marketplace, item]
+                Notify(transaction_details)
+                return True
+        """
 
         # ========= Administration, Crowdsale & NEP-5 Specific Operations ==========
 
@@ -345,7 +336,7 @@ def Main(operation, args):
     return False
 
 
-# region Inventory operations
+# region Marketplace operations
 
 def give_items(args):
     """
@@ -559,12 +550,6 @@ def save_inventory(marketplace, address, inventory):
     Put(context, storage_key, inventory)
 
     return True
-
-
-# endregion
-
-
-# region Market Methods
 
 
 def put_offer(marketplace, address, item_id, price):
@@ -856,7 +841,7 @@ def marketplace_owner(marketplace):
     owner = Get(context, owner_key)
     return owner
 
-# region Administration
+# endregion
 
 
 # region NEP-5 operations
@@ -1145,7 +1130,7 @@ def add_to_circulation(amount):
 # endregion
 
 
-# region Serialization Helpers
+# region Serialization helpers
 
 def deserialize_bytearray(data):
     """ Helper method to deserialize a byte array. """
