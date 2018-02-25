@@ -7,12 +7,11 @@ MIT License
 
 Copyright 2018 LootToken Inc.
 
-This smart contract creates a standard for games to integrate a storage system
-for items on the NEO blockchain as "digital assets". This enables the construction of marketplaces,
-a way for players to trade these "digital assets" for the NEP-5 asset LOOT tied to
-a fiat value. The marketplaces when registered, grant an owner
-exclusive permissions to invoke the operations on their named marketplace.
-The system is immutable, secure, fee-less, and without third party.
+This smart contract enables the creation of marketplaces for games, that is, it
+integrates a storage system for items on the NEO blockchain as "digital assets" where
+they are trade-able for the NEP-5 asset LOOT tied to a fiat value. A marketplace is registered
+with an owner, who has exclusive permissions to invoke the operations on this marketplace
+This system is immutable, secure, fee-less and without third party.
 
 Author: Christopher Luke Poli - @poli
 Email: aus.poli1@gmail.com
