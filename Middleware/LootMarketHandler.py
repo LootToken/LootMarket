@@ -185,14 +185,10 @@ class LootSmartContract(threading.Thread):
                 logger.info("-Setting offer:%s to %s", offer_id, offer_information)
                 self.redis_cache.set(offer_id, offer_information)
 
-            # We need to notify both the players of the transfer item event.
-            #if event_name == "transfer_item":
-            #transaction_details = ["transfer_item", marketplace, address_from, address_to, item_id, operation_result]
-
             # Event: Market/Item operation
             # The game/operator must know if these operations were successfully completed within the smart contract.
             # All of these notify events are sent in the same format.
-            if event_name in ("cancel_offer", "buy_offer", "put_offer", "transfer_item", "give_items", "remove_item"):
+            if event_name in ("cancel_offer", "buy_offer", "put_offer", "give_items", "remove_item"):
                 # Convert the script hash to address.
                 script_hash = event.event_payload[2]
                 sh = UInt160.UInt160(data=script_hash)

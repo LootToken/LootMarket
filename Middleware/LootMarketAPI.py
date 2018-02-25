@@ -214,7 +214,7 @@ def search_transaction(request, transaction_key, address, operation):
     This transaction key can be used to call this function to check:
         1. Whether the transaction was found on the blockchain.
         2. Whether the smart contract operation invoked was successful.
-    The currently searchable operations:  give_items,remove_item,buy_offer,put_offer,cancel_offer,transfer_item.
+    The currently searchable operations:  give_items,remove_item,buy_offer,put_offer,cancel_offer.
 
     :param request:Request object which gets passed into every route function.
     :param transaction_key:str The transaction key to query.
