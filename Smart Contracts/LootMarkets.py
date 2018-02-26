@@ -5,7 +5,7 @@
 
 MIT License
 
-Copyright 2018 Christopher Poli and LootToken
+Copyright 2018 LootToken Inc.
 
 This smart contract enables the creation of marketplaces for games, that is, it
 integrates a storage system for items on the NEO blockchain as "digital assets" where
