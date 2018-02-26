@@ -1,7 +1,7 @@
 """
 =====================================================================================
 
-===== Loot-Market =====
+===== LootMarkets =====
 
 MIT License
 
@@ -235,7 +235,6 @@ def Main(operation, args):
                 item_type = args[2]
                 item_rarity = args[3]
                 item_damage = args[4]
-                # Notify the API whether the item was created.
                 operation_result = create_item(marketplace, item_id, item_type, item_rarity, item_damage)
                 transaction_details = ["create_item", marketplace, item_id, operation_result]
                 Notify(transaction_details)
@@ -246,7 +245,6 @@ def Main(operation, args):
             if len(args) == 2:
                 marketplace = args[0]
                 item_id = args[1]
-                # Notify the API the details of the item.
                 item_s = get_item(item_id)
                 item = deserialize_bytearray(item_s)
                 transaction_details = ["get_item", marketplace, item]
