@@ -4,7 +4,7 @@
 Game integration API
 
 This is the API used for the integration of our smart contract functionality into a game.
-This API is built to be run in the game code, and should only be accessible via this method.
+The API should only be accessible by the game code of which a marketplace is integrated into.
 The API utilizes a queue based system, allowing all the transactions to occur in order,
 without impeding on the NEO network.
 
@@ -200,8 +200,12 @@ class UUIDEncoder(json.JSONEncoder):
 @app.route('/')
 def index(request):
     """ The API index. """
-    return "This is the API used for LootClicker. \nPlease visit LootClicker.io for more information."
+    return "This is the API being used for LootClicker. \nPlease visit LootClicker.io for more information."
 
+# endregion
+
+
+# region Marketplace
 
 @app.route('/search/<transaction_key>/<address>/<operation>')
 @json_response
@@ -248,10 +252,6 @@ def search_transaction(request, transaction_key, address, operation):
         "operation_complete": operation_complete
     }
 
-
-# endregion
-
-#region Inventory
 
 @app.route('/inventory/<address>')
 @catch_exceptions
@@ -369,9 +369,7 @@ def transfer_item(request, address_from, address_to, item_id):
     return {
         "transaction_key": transaction_key
     }
-# endregion
 
-# region Marketplace
 
 @app.route('/market/owner/<marketplace>')
 @catch_exceptions
@@ -460,9 +458,6 @@ def put_offer(request, address, item_id, price):
     return {
         "transaction_key": transaction_key
     }
-
-
-
 
 @app.route('/market/cancel/<address>/<offer_id>')
 @json_response
@@ -553,7 +548,7 @@ def get_offer(request, offer_id):
         "offer": r_offer
     }
 
-#endregion
+# endregion
 
 # region Wallet
 
@@ -677,10 +672,3 @@ if __name__ == "__main__":
 
     # reactor.callInThread(sc_queue.run)
     reactor.run()
-
-
-
-
-
-
-
