@@ -30,7 +30,7 @@ from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.Prompt.Utils import parse_param
 
 # Setup the blockchain task queue.
-class LootSmartContract(threading.Thread):
+class LootMarketsSmartContract(threading.Thread):
     """
     Invoke queue is necessary for handling many concurrent smart contracts invokes.
     Many API calls want to initiate a smart contract operation, they add them
@@ -53,7 +53,7 @@ class LootSmartContract(threading.Thread):
     _walletdb_loop = None
 
     def __init__(self, contract_hash, wallet_path, wallet_pass):
-        super(LootSmartContract, self).__init__()
+        super(LootMarketsSmartContract, self).__init__()
         self.daemon = True
 
         self.contract_hash = contract_hash

@@ -60,7 +60,7 @@ from uuid import uuid4
 from uuid import UUID
 
 # Import the smart contract queue handler.
-from LootMarketHandler import LootSmartContract
+from LootMarketHandler import LootMarketsSmartContract
 
 # Allow importing 'neo' from parent path
 current_dir = os.path.dirname(os.path.abspath(__file__))
