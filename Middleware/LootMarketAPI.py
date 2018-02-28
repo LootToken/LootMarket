@@ -72,7 +72,7 @@ API_PORT = os.getenv("API_PORT", "8090")
 
 # The hash our of smart contract.
 # Currently deployed on CoZ testnet.
-CONTRACT_HASH = os.getenv("LootTokenHash", "55bfd190812d608e696f5c7c751c83a667c82364")
+CONTRACT_HASH = os.getenv("LootTokenHash", "31b271a2a27589d26171a0433cd7e32f1d16b75b")
 
 # Which protocol to configure to: privnet/testnet/mainnet.
 PROTOCOL_CONFIG = os.path.join(parent_dir, "protocol.faucet.json")
