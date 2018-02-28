@@ -37,7 +37,7 @@ class LootMarketsSmartContract(threading.Thread):
     to this queue, and they get processed in order.
     """
     # The name of the smart contract marketplace being used, this must be registered on the blockchain before use.
-    marketplace = "LootClickerMarket"
+    marketplace = "LootClicker"
 
     smart_contract = None
     contract_hash = None
@@ -154,9 +154,9 @@ class LootMarketsSmartContract(threading.Thread):
                     # Offer is received like 'offer\x03' so we convert to 'offer3'.
                     # We don't want to show the cached offers to the players.
                     i = i.decode("utf-8")
-                    if i not in self.cached_offers:
-                        s = ord(i.split('offer')[1])
-                        offer_id = 'offer' + str(s)
+                    index = ord(i.split('offer')[1])
+                    offer_id = 'offer' + str(index)
+                    if offer_id not in self.cached_offers:
                         offers.append(offer_id)
 
                 # Log the information and save to the cache.
@@ -289,6 +289,10 @@ class LootMarketsSmartContract(threading.Thread):
         ClaimGas(self.wallet)
         self.close_wallet()
 
+    def put_in_cached_offers(self,offer_id):
+        """ Put an offer in the offers that are undergoing purchase or cancel. """
+        self.cached_offers.append(offer_id)
+
     def _wait_for_tx(self,tx, max_seconds=300):
         """ Wait for the transaction to show up on the blockchain. """
         sec_passed = 0
@@ -333,6 +337,8 @@ class LootMarketsSmartContract(threading.Thread):
         :param transaction_type:str The type of smart contract operation we are test invoking.
         :param operation_name:str The name of the operation we are test invoking.
         :param args:list The arguments to pass to the smart contract operation.
+        :return:
+            bool: Whether we found a tx for the test invoke.
         """
         if self.wallet is None:
             self.open_wallet()
@@ -369,7 +375,7 @@ class LootMarketsSmartContract(threading.Thread):
         if not tx:
             logger.info("TestInvokeContract failed: no tx was found!")
             self.close_wallet()
-            return
+            return False
 
         # If we found the tx,the result is a success, and the operation
         # is a buy or cancel, we should cache it.
@@ -377,6 +383,9 @@ class LootMarketsSmartContract(threading.Thread):
             # Offers are concatenated in the smart contract for specific markets.
             offer_id = self.marketplace+offer_id
             self.cached_offers.append(offer_id)
+
+        return True
+
 
     def invoke_operation(self, operation_name,transaction_key, *args):
         """

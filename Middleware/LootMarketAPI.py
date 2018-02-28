@@ -414,13 +414,14 @@ def buy_offer(request, address, offer_id):
 
     # Offer_id is sent in format, e.g. 'offer0', need to convert to 'offer\x00' for contract.
     index = offer_id.split('r', 1)
-    p = int.to_bytes(int(index[1]), 1, 'little')
-    p = str(p).lstrip('b').lstrip('\'').rstrip('\'')
-    offer_id_s = 'offer' + p
+    byte_part = int.to_bytes(int(index[1]), 1, 'little')
+    byte_part = str(byte_part).lstrip('b').lstrip('\'').rstrip('\'')
+    offer_id_s = 'offer' + byte_part
 
     # First we test invoke the offer, if it does not fail, we cache the cancelled offer so it isn't
     # displayed in the market until the tx is found.
-    smart_contract.test_invoke("offer","buy_offer",address,offer_id_s)
+    if smart_contract.test_invoke("offer","buy_offer",address,offer_id_s):
+        smart_contract.put_in_cached_offers(offer_id)
 
     # Generate a unique UUID4 transaction key.
     transaction_key = uuid4()
@@ -479,13 +480,14 @@ def cancel_offer(request, address, offer_id):
 
     # Offer_id is sent in format, e.g. 'offer0', need to convert to 'offer\x00' for contract.
     index = offer_id.split('r', 1)
-    p = int.to_bytes(int(index[1]), 1, 'little')
-    p = str(p).lstrip('b').lstrip('\'').rstrip('\'')
-    offer_id_s = 'offer' + p
+    byte_part = int.to_bytes(int(index[1]), 1, 'little')
+    byte_part = str(byte_part).lstrip('b').lstrip('\'').rstrip('\'')
+    offer_id_s = 'offer' + byte_part
 
     # First we test invoke the offer, if it does not fail, we cache the cancelled offer so it isn't
     # displayed in the market until the tx is found.
-    smart_contract.test_invoke("offer","cancel_offer",address,offer_id_s)
+    if smart_contract.test_invoke("offer","cancel_offer",address,offer_id_s):
+        smart_contract.put_in_cached_offers(offer_id)
 
     # Generate a UUID4 transaction key.
     transaction_key = uuid4()
@@ -542,9 +544,9 @@ def get_offer(request, offer_id):
 
     # Offer_id is sent in format, e.g. 'offer1', need to convert to e.g. 'offer\x01' for contract.
     index = offer_id.split('r', 1)
-    p = int.to_bytes(int(index[1]), 1, 'little')
-    p = str(p).lstrip('b').lstrip('\'').rstrip('\'')
-    offer_id_s = 'offer' + p
+    byte_part = int.to_bytes(int(index[1]), 1, 'little')
+    byte_part = str(byte_part).lstrip('b').lstrip('\'').rstrip('\'')
+    offer_id_s = 'offer' + byte_part
 
     # Test invoke contract with the offer_id.
     smart_contract.test_invoke("offer","get_offer", offer_id_s)
