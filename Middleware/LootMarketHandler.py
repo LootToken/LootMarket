@@ -352,19 +352,17 @@ class LootMarketsSmartContract(threading.Thread):
         # Method of dealing with double backslashes being duplicated when sending.
         if transaction_type == "offer":
             # This transaction type will only be with an address or offer at the front.
-            if "offer" in str(args[0]):
-                offer_id = str(args[0])
-            else:
+            if len(args) == 2:
+                address = args[0]
                 offer_id = str(args[1])
-            l = str([self.marketplace, offer_id])
-            list_to_add = l.replace("\\", '', 1)
-
-            # If we were passed in an address, put that in front, else put just the offer id.
-            if len(args) == 1:
-                _args = [self.contract_hash, operation_name, list_to_add]
+                params = str([self.marketplace, address, offer_id])
             else:
-                address = str(args[0])
-                _args = [self.contract_hash, operation_name, address, list_to_add]
+                offer_id = str(args[0])
+                params = str([self.marketplace, offer_id])
+
+            list_to_add = params.replace("\\", '', 1)
+
+            _args = [self.contract_hash, operation_name, list_to_add]
 
         logger.info("TestInvokeContract args: %s", _args)
         tx, fee, results, num_ops = TestInvokeContract(self.wallet, _args)
@@ -465,7 +463,7 @@ class LootMarketsSmartContract(threading.Thread):
             else:
                 logger.error("=== TX not found!")
 
-            # If this operation is buy or cancel, remove the last element
+            # If this operation is buy or cancel, remove the first element
             # from the cached offers, the operations are ordered in the queue so we may do this.
             if operation_name in ["buy_offer","cancel_offer"]:
                 del self.cached_offers[0]
