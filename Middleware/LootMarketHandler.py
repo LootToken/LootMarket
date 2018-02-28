@@ -468,7 +468,7 @@ class LootMarketsSmartContract(threading.Thread):
             # If this operation is buy or cancel, remove the last element
             # from the cached offers, the operations are ordered in the queue so we may do this.
             if operation_name in ["buy_offer","cancel_offer"]:
-                del self.cached_offers[len(self.cached_offers)-1]
+                del self.cached_offers[0]
 
             self.close_wallet()
 
