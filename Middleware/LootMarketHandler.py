@@ -317,12 +317,11 @@ class LootMarketsSmartContract(threading.Thread):
         else:
             self.redis_cache.set("tx%s" % transaction_key, False)
 
-
-    def test_invoke(self,type,operation_name,*args):
+    def test_invoke(self,transaction_type,operation_name,*args):
         """
         Test invoke a smart contract operation. We catch the Notify events of the contract for instant query.
 
-        :param type:str The type of smart contract operation we are test invoking.
+        :param transaction_type:str The type of smart contract operation we are test invoking.
         :param operation_name:str The name of the operation we are test invoking.
         :param args:list The arguments to pass to the smart contract operation.
         """
@@ -331,25 +330,39 @@ class LootMarketsSmartContract(threading.Thread):
 
         # If we get a marketplace specific operation, we need to add the marketplace
         # name in front of the argument list as hence the LootMarkets smart contract convention.
-        if type == "market":
+        if transaction_type == "market":
             l = list(args)
             l.insert(0,self.marketplace)
             _args = [self.contract_hash, operation_name, str(l)]
 
         # If we get a non-marketplace specific operation, we do not need to add the marketplace
         # name in front of the argument list.
-        if type == "general":
+        if transaction_type == "general":
             _args = [self.contract_hash, operation_name, str(list(args))]
 
         # Method of dealing with double backslashes being duplicated when sending.
-        if type == "offer":
-            offer_id = str(args[0])
+        if transaction_type == "offer":
+            # This transaction type will only be with an address or offer at the front.
+            if "offer" in str(args[0]):
+                offer_id = str(args[0])
+            else:
+                offer_id = str(args[1])
             l = str([self.marketplace,offer_id])
             list_to_add = l.replace("\\",'',1)
-            _args = [self.contract_hash, operation_name,list_to_add]
+
+            # if we were passed in an address, put that in front, else put just the offer id.
+            if len(args) == 1:
+                _args = [self.contract_hash, operation_name,list_to_add]
+            else:
+                address = str(args[0])
+                _args = [self.contract_hash, operation_name,address,list_to_add]
+
 
         logger.info("TestInvokeContract args: %s", _args)
         tx, fee, results, num_ops = TestInvokeContract(self.wallet, _args)
+        print (tx)
+        print(fee)
+        print(results)
         if not tx:
             logger.info("TestInvokeContract failed: no tx was found!")
         self.close_wallet()

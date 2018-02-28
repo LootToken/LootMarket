@@ -100,11 +100,15 @@ if not API_AUTH_TOKEN:
         raise Exception("No API_AUTH_TOKEN environment variable found")
 
 # Setup the smart contract and cache.
-smart_contract = LootSmartContract(CONTRACT_HASH, WALLET_FILE, WALLET_PWD)
+smart_contract = LootMarketsSmartContract(CONTRACT_HASH, WALLET_FILE, WALLET_PWD)
 redis_cache = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 # Setup web app.
 app = Klein()
+
+# Stores offers that are trying to be purchased so we don't see them within our game.
+# If an offer has been bought, we do not want etc 10 people to queue up and buy the same one.
+cached_offers = []
 
 
 #region Decorators
@@ -478,6 +482,9 @@ def cancel_offer(request, address, offer_id):
     p = int.to_bytes(int(index[1]), 1, 'little')
     p = str(p).lstrip('b').lstrip('\'').rstrip('\'')
     offer_id_s = 'offer' + p
+
+    # First we testinvoke the offer, if it dosen't fail, we cache the cancelled offer and do not send it back to Unity.
+    smart_contract.test_invoke("offer","cancel_offer",address,offer_id_s)
 
     # Generate a UUID4 transaction key.
     transaction_key = uuid4()
