@@ -45,6 +45,12 @@ class LootMarketsSmartContract(threading.Thread):
     wallet_path = None
     wallet_pass = None
 
+    # Stores offers that are trying to be cancelled/bought so we don't see them within the marketplace.
+    # We do not want multiple people queuing up to buy the same item, or a cancelled item.
+    # This will be removed from the cache as all transactions will be added to the queue and eventually invoked,
+    # removing it on fail or success.
+    cached_offers = []
+
     tx_in_progress = None
 
     # Queue items are always a tuple (operation_name, args)
@@ -142,14 +148,17 @@ class LootMarketsSmartContract(threading.Thread):
             # Event: get_all_offers
             if event_name == "get_all_offers":
                 retrieved_offers = event.event_payload[2]
-
                 # Decode all the offers given in the payload.
                 offers = []
                 for i in retrieved_offers:
                     # Offer is received like 'offer\x03' so we convert to 'offer3'.
-                    s = ord(i.decode().split('offer')[1])
-                    offer_id = 'offer' + str(s)
-                    offers.append(offer_id)
+                    # We don't want to show the cached offers to the players.
+                    i = i.decode("utf-8")
+                    if i not in self.cached_offers:
+                        s = ord(i.split('offer')[1])
+                        offer_id = 'offer' + str(s)
+                        offers.append(offer_id)
+
                 # Log the information and save to the cache.
                 logger.info("-Setting offers in marketplace: %s", offers)
                 self.redis_cache.set("offers", offers)
@@ -280,7 +289,7 @@ class LootMarketsSmartContract(threading.Thread):
         ClaimGas(self.wallet)
         self.close_wallet()
 
-    def _wait_for_tx(self, tx, max_seconds=300):
+    def _wait_for_tx(self,tx, max_seconds=300):
         """ Wait for the transaction to show up on the blockchain. """
         sec_passed = 0
         while sec_passed < max_seconds:
@@ -347,26 +356,29 @@ class LootMarketsSmartContract(threading.Thread):
                 offer_id = str(args[0])
             else:
                 offer_id = str(args[1])
-            l = str([self.marketplace,offer_id])
-            list_to_add = l.replace("\\",'',1)
+            l = str([self.marketplace, offer_id])
+            list_to_add = l.replace("\\", '', 1)
 
-            # if we were passed in an address, put that in front, else put just the offer id.
+            # If we were passed in an address, put that in front, else put just the offer id.
             if len(args) == 1:
-                _args = [self.contract_hash, operation_name,list_to_add]
+                _args = [self.contract_hash, operation_name, list_to_add]
             else:
                 address = str(args[0])
-                _args = [self.contract_hash, operation_name,address,list_to_add]
-
+                _args = [self.contract_hash, operation_name, address, list_to_add]
 
         logger.info("TestInvokeContract args: %s", _args)
         tx, fee, results, num_ops = TestInvokeContract(self.wallet, _args)
-        print (tx)
-        print(fee)
-        print(results)
         if not tx:
             logger.info("TestInvokeContract failed: no tx was found!")
-        self.close_wallet()
+            self.close_wallet()
+            return
 
+        # If we found the tx,the result is a success, and the operation
+        # is a buy or cancel, we should cache it.
+        if operation_name in ["buy_offer","cancel_offer"]:
+            # Offers are concatenated in the smart contract for specific markets.
+            offer_id = self.marketplace+offer_id
+            self.cached_offers.append(offer_id)
 
     def invoke_operation(self, operation_name,transaction_key, *args):
         """
@@ -429,9 +441,9 @@ class LootMarketsSmartContract(threading.Thread):
         else:
             _args = [self.contract_hash, operation_name, str(list(args))]
 
-
         logger.info("TestInvokeContract args: %s", _args)
         tx, fee, results, num_ops = TestInvokeContract(self.wallet, _args)
+
         if not tx:
             raise Exception("TestInvokeContract failed")
 
@@ -440,6 +452,7 @@ class LootMarketsSmartContract(threading.Thread):
         sent_tx = InvokeContract(self.wallet, tx, fee)
 
         if sent_tx:
+
             # Save the sent transaction in the redis cache.
             self.redis_cache.set(transaction_key,sent_tx.Hash.ToString())
 
@@ -451,6 +464,11 @@ class LootMarketsSmartContract(threading.Thread):
                 logger.info("✅ Transaction found!")
             else:
                 logger.error("=== TX not found!")
+
+            # If this operation is buy or cancel, remove the last element
+            # from the cached offers, the operations are ordered in the queue so we may do this.
+            if operation_name in ["buy_offer","cancel_offer"]:
+                del self.cached_offers[len(self.cached_offers)-1]
 
             self.close_wallet()
 

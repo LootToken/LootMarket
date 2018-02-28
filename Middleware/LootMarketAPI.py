@@ -78,7 +78,7 @@ CONTRACT_HASH = os.getenv("LootTokenHash", "31b271a2a27589d26171a0433cd7e32f1d16
 PROTOCOL_CONFIG = os.path.join(parent_dir, "protocol.faucet.json")
 
 # Location of the wallet file and password.
-WALLET_FILE = "/home/ec2-user/neo-python/loot.wallet"
+WALLET_FILE = "/home/ec2-user/neo-python/poli.wallet"
 WALLET_PWD = os.getenv("WALLET_PWD", "password123")
 
 # Log file settings.
@@ -105,10 +105,6 @@ redis_cache = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 # Setup web app.
 app = Klein()
-
-# Stores offers that are trying to be purchased so we don't see them within our game.
-# If an offer has been bought, we do not want etc 10 people to queue up and buy the same one.
-cached_offers = []
 
 
 #region Decorators
@@ -422,6 +418,10 @@ def buy_offer(request, address, offer_id):
     p = str(p).lstrip('b').lstrip('\'').rstrip('\'')
     offer_id_s = 'offer' + p
 
+    # First we test invoke the offer, if it does not fail, we cache the cancelled offer so it isn't
+    # displayed in the market until the tx is found.
+    smart_contract.test_invoke("offer","buy_offer",address,offer_id_s)
+
     # Generate a unique UUID4 transaction key.
     transaction_key = uuid4()
     transaction_key = UUIDEncoder.default(None,transaction_key)
@@ -483,7 +483,8 @@ def cancel_offer(request, address, offer_id):
     p = str(p).lstrip('b').lstrip('\'').rstrip('\'')
     offer_id_s = 'offer' + p
 
-    # First we testinvoke the offer, if it dosen't fail, we cache the cancelled offer and do not send it back to Unity.
+    # First we test invoke the offer, if it does not fail, we cache the cancelled offer so it isn't
+    # displayed in the market until the tx is found.
     smart_contract.test_invoke("offer","cancel_offer",address,offer_id_s)
 
     # Generate a UUID4 transaction key.
