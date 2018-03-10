@@ -39,17 +39,17 @@ class LootMarketsSmartContract(threading.Thread):
     # The name of the smart contract marketplace being used, this must be registered on the blockchain before use.
     marketplace = "LootClicker"
 
-    smart_contract = None
-    contract_hash = None
-
-    wallet_path = None
-    wallet_pass = None
-
     # Stores offers that are trying to be cancelled/bought so we don't see them within the marketplace.
     # We do not want multiple people queuing up to buy the same item, or a cancelled item.
     # This will be removed from the cache as all transactions will be added to the queue and eventually invoked,
     # removing it on fail or success.
     cached_offers = []
+
+    smart_contract = None
+    contract_hash = None
+
+    wallet_path = None
+    wallet_pass = None
 
     tx_in_progress = None
 

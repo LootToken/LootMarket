@@ -1179,7 +1179,7 @@ def serialize_array(items):
 
     output = itemlength
 
-    # Now go through and append all your stuff.
+    # Now go through and append everything.
     for item in items:
 
         # Get the variable length of the item
@@ -1197,7 +1197,7 @@ def serialize_array(items):
 
 def serialize_var_length_item(item):
     """ Helper method for serialize_array. """
-    # Get the length of your stuff.
+    # Get the length of your item.
     stuff_len = len(item)
 
     # Now we need to know how many bytes the length of the array
@@ -1209,7 +1209,7 @@ def serialize_var_length_item(item):
     # Two byte.
     elif stuff_len <= 65535:
         byte_len = b'\x02'
-    # Hopefully 4 byte.
+    # Four Byte.
     else:
         byte_len = b'\x04'
 
