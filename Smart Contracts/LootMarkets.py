@@ -11,6 +11,8 @@ they are trade-able for the NEP-5 asset LOOT tied to a fiat value. A marketplace
 with an owner, who has exclusive permissions to invoke the operations on this marketplace.
 This system is immutable, secure, fee-less and without third party.
 
+Add new Serialization/Deserialization
+
 Author: Christopher Luke Poli - @poli
 Email: aus.poli1@gmail.com
 
