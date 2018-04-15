@@ -3,8 +3,6 @@
 
 ===== LootMarkets =====
 
-MIT License
-
 Copyright 2018 LootToken Inc.
 
 This smart contract enables the creation of marketplaces for games, that is, it
